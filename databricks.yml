@@ -1,0 +1,35 @@
+bundle:
+  name: pyspark-pipeline
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405605201845024.4.azuredatabricks.net
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405618385351801.1.azuredatabricks.net
+
+resources:
+  jobs:
+    marketing_etl_job:
+      name: "[${bundle.target}] Marketing Bronze to Silver ETL"
+      tasks:
+        - task_key: run_transformations
+          job_cluster_key: single_node_cluster
+          spark_python_task:
+            python_file: src/etl/transformations.py
+      job_clusters:
+        - job_cluster_key: single_node_cluster
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_D4ds_v4
+            num_workers: 0
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: "singleNode"
+            custom_tags:
+              ResourceClass: "SingleNode"
