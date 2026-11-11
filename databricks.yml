@@ -1,35 +1,41 @@
 bundle:
   name: pyspark-pipeline
 
+variables:
+  catalog:
+    description: "Unity Catalog name for the target workspace"
+    default: dbx_demo_dev_ws_7405605201845024
+
 targets:
   dev:
     mode: development
     default: true
     workspace:
       host: https://adb-7405605201845024.4.azuredatabricks.net
+    variables:
+      catalog: dbx_demo_dev_ws_7405605201845024
 
   prod:
     mode: production
     workspace:
       host: https://adb-7405618385351801.1.azuredatabricks.net
+    variables:
+      catalog: dbx_demo_prod_ws_7405618385351801
 
 resources:
   jobs:
     marketing_etl_job:
-      name: "[${bundle.target}] Marketing Bronze to Silver ETL"
+      name: "[${bundle.target}] Marketing Medallion ETL (Bronze -> Silver -> Gold)"
       tasks:
-        - task_key: run_transformations
-          job_cluster_key: single_node_cluster
+        - task_key: run_medallion_pipeline
           spark_python_task:
-            python_file: src/etl/transformations.py
-      job_clusters:
-        - job_cluster_key: single_node_cluster
-          new_cluster:
-            spark_version: 14.3.x-scala2.12
-            node_type_id: Standard_D4ds_v4
-            num_workers: 0
-            spark_conf:
-              spark.master: "local[*]"
-              spark.databricks.cluster.profile: "singleNode"
-            custom_tags:
-              ResourceClass: "SingleNode"
+            python_file: src/etl/run_pipeline.py
+            parameters:
+              - "--catalog"
+              - "${var.catalog}"
+          environment_key: default
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
