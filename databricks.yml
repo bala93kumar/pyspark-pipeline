@@ -5,6 +5,9 @@ variables:
   catalog:
     description: "Unity Catalog name for the target workspace"
     default: dbx_demo_dev_ws_7405605201845024
+  job_permission:
+    description: "Permission level granted to the data_engineers group on the job"
+    default: CAN_MANAGE_RUN
 
 targets:
   dev:
@@ -14,6 +17,7 @@ targets:
       host: https://adb-7405605201845024.4.azuredatabricks.net
     variables:
       catalog: dbx_demo_dev_ws_7405605201845024
+      job_permission: CAN_MANAGE_RUN
 
   prod:
     mode: production
@@ -21,11 +25,15 @@ targets:
       host: https://adb-7405618385351801.1.azuredatabricks.net
     variables:
       catalog: dbx_demo_prod_ws_7405618385351801
+      job_permission: CAN_VIEW
 
 resources:
   jobs:
     marketing_etl_job:
       name: "[${bundle.target}] Marketing Medallion ETL (Bronze -> Silver -> Gold)"
+      permissions:
+        - group_name: data_engineers
+          level: ${var.job_permission}
       tasks:
         - task_key: run_medallion_pipeline
           spark_python_task:
